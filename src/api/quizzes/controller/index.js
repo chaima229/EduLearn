@@ -1,7 +1,7 @@
 const db = require('../../../config/db');
 const Quiz = require('../../../models/Quiz');
 const QuizQuestion = require('../../../models/QuizQuestion');
-const QuizOption = require('../../../models/QuizOption');
+const QuizOption = require('../../../models');
 
 // Create a new quiz
 exports.createQuiz = async (req, res) => {

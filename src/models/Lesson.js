@@ -1,43 +1,39 @@
-const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../../config/db');
-
-class Lesson extends Model {}
-
-Lesson.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-    },
-    cours_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Cours',
-            key: 'id',
+module.exports = (sequelize, DataTypes) => {
+    const Lesson = sequelize.define('Lecons', {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
         },
-    },
-    titre: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    contenu: {
-        type: DataTypes.TEXT,
-    },
-    ordre: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    duree_estimee_min: {
-        type: DataTypes.INTEGER,
-    },
-}, {
-    sequelize,
-    modelName: 'Lesson',
-    tableName: 'Lecons',
-    timestamps: true,
-    createdAt: 'date_creation',
-    updatedAt: 'date_mise_a_jour',
-});
-
-module.exports = Lesson;
+        cours_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Cours',
+                key: 'id',
+            },
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+        },
+        titre: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        contenu: DataTypes.TEXT,
+        ordre: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        duree_estimee_min: DataTypes.INTEGER,
+    }, {
+        tableName: 'Lecons',
+        timestamps: false,
+        indexes: [
+            {
+                unique: true,
+                fields: ['cours_id', 'ordre']
+            }
+        ]
+    });
+    return Lesson;
+};

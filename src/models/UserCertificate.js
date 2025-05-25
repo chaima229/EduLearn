@@ -1,51 +1,57 @@
-const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
-
-class UserCertificate extends Model {}
-
-UserCertificate.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-    },
-    utilisateur_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Utilisateurs',
-            key: 'id',
+module.exports = (sequelize, DataTypes) => {
+    const UserCertificate = sequelize.define('CertificatsUtilisateur', {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
         },
-    },
-    certificat_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Certificats',
-            key: 'id',
+        utilisateur_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Utilisateurs',
+                key: 'id',
+            },
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
         },
-    },
-    cours_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'Cours',
-            key: 'id',
+        certificat_id: { // Le type de certificat
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Certificats',
+                key: 'id',
+            },
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
         },
-    },
-    date_obtention: {
-        type: DataTypes.DATEONLY,
-        allowNull: false,
-    },
-    url_certificat_genere: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-}, {
-    sequelize,
-    modelName: 'UserCertificate',
-    tableName: 'CertificatsUtilisateur',
-    timestamps: false,
-});
-
-module.exports = UserCertificate;
+        cours_id: { // Redondant mais pratique pour les requêtes
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Cours',
+                key: 'id',
+            },
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+        },
+        date_obtention: {
+            type: DataTypes.DATEONLY, // DATE sans l'heure
+            allowNull: false,
+        },
+        url_certificat_genere: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
+    }, {
+        tableName: 'CertificatsUtilisateur',
+        timestamps: false, // date_obtention est gérée manuellement
+        indexes: [
+            {
+                unique: true,
+                fields: ['utilisateur_id', 'certificat_id']
+            }
+        ]
+    });
+    return UserCertificate;
+};

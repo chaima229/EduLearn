@@ -1,32 +1,32 @@
 module.exports = (sequelize, DataTypes) => {
-    const Certificate = sequelize.define('Certificats', {
+    const ResponseOption = sequelize.define('OptionsReponse', {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true,
         },
-        cours_id: {
+        question_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            unique: true, // Un type de certificat est lié à un cours spécifique
             references: {
-                model: 'Cours',
+                model: 'QuestionsQuiz',
                 key: 'id',
             },
             onDelete: 'CASCADE',
             onUpdate: 'CASCADE',
         },
-        titre_certificat: {
-            type: DataTypes.STRING(255),
+        texte_option: {
+            type: DataTypes.STRING(500),
             allowNull: false,
         },
-        description_modele: {
-            type: DataTypes.TEXT,
-            allowNull: true,
+        est_correcte: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
         },
     }, {
-        tableName: 'Certificats',
+        tableName: 'OptionsReponse',
         timestamps: false,
     });
-    return Certificate;
+    return ResponseOption;
 };

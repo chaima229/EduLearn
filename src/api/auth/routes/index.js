@@ -1,15 +1,15 @@
+// src/api/auth/routes/index.js
 const express = require('express');
 const router = express.Router();
-const authController = require('../controller/index');
+const authController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware'); // Renommez l'import pour plus de clarté
 
-// Route for user registration
+// ... vos console.log pour débogage ...
+console.log('Type of myCustomAuthMiddleware:', typeof myCustomAuthMiddleware); // Devrait afficher 'function'
+
 router.post('/register', authController.register);
-
-// Route for user login
 router.post('/login', authController.login);
+// Utilisez le middleware que vous avez importé directement
+router.get('/me', myCustomAuthMiddleware, authController.getMe);
 
-// Route for user logout
-router.post('/logout', authController.logout);
-
-// Export the router
 module.exports = router;

@@ -1,16 +1,20 @@
+// src/api/enrollments/routes/index.js
 const express = require('express');
 const router = express.Router();
-const enrollmentController = require('../controller/index');
+const enrollmentController = require('../controller'); // ou la déstructuration
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-// Routes for managing course enrollments
-router.post('/', enrollmentController.createEnrollment);
-router.get('/', enrollmentController.getAllEnrollments);
-router.get('/:id', enrollmentController.getEnrollmentById);
-router.put('/:id', enrollmentController.updateEnrollment);
-router.delete('/:id', enrollmentController.deleteEnrollment);
+console.log('--- Dans enrollments/routes ---');
+console.log('Type of myCustomAuthMiddleware:', typeof myCustomAuthMiddleware);
+// Si vous importez tout l'objet controller:
+console.log('enrollmentController:', enrollmentController);
+console.log('Type of enrollmentController.createEnrollment:', typeof enrollmentController.createEnrollment); // Remplacez createEnrollment par le nom de votre fonction
+// Si vous déstructurez le controller:
+// const { createEnrollment, getMyEnrollments } = require('../controller');
+// console.log('Type of createEnrollment from import:', typeof createEnrollment);
 
-// Routes for managing lesson progress
-router.post('/:enrollmentId/lessons/:lessonId/progress', enrollmentController.updateLessonProgress);
-router.get('/:enrollmentId/lessons/progress', enrollmentController.getLessonProgressByEnrollmentId);
+
+// Ligne 13 (ou la vôtre)
+router.post('/', myCustomAuthMiddleware, enrollmentController.createEnrollment); // ou le nom de votre fonction
 
 module.exports = router;

@@ -1,19 +1,23 @@
+// src/api/forum/routes/index.js
 const express = require('express');
-const router = express.Router();
-const forumController = require('../controller/index');
+const router = express.Router({ mergeParams: true }); // mergeParams si c'est imbriqué
+const forumController = require('../controller'); // ou la déstructuration
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware'); // ou un autre middleware si pertinent
 
-// Routes for forum topics
-router.post('/topics', forumController.createTopic); // Create a new forum topic
-router.get('/topics', forumController.getAllTopics); // Get all forum topics
-router.get('/topics/:id', forumController.getTopicById); // Get a specific forum topic by ID
-router.put('/topics/:id', forumController.updateTopic); // Update a specific forum topic by ID
-router.delete('/topics/:id', forumController.deleteTopic); // Delete a specific forum topic by ID
+console.log('--- Dans forum/routes ---');
+console.log('Type of myCustomAuthMiddleware:', typeof myCustomAuthMiddleware); // Si vous l'utilisez
 
-// Routes for forum messages
-router.post('/messages', forumController.createMessage); // Create a new forum message
-router.get('/messages', forumController.getAllMessages); // Get all forum messages
-router.get('/messages/:id', forumController.getMessageById); // Get a specific forum message by ID
-router.put('/messages/:id', forumController.updateMessage); // Update a specific forum message by ID
-router.delete('/messages/:id', forumController.deleteMessage); // Delete a specific forum message by ID
+// Si vous importez tout l'objet controller:
+console.log('forumController:', forumController);
+// Remplacez 'nomDeLaFonctionUtiliseeALaLigne14' par le vrai nom de la fonction du contrôleur
+console.log('Type of forumController.nomDeLaFonctionUtiliseeALaLigne14:', typeof forumController.nomDeLaFonctionUtiliseeALaLigne14);
+
+// Si vous déstructurez le controller:
+// const { getTopics, createTopic } = require('../controller');
+// console.log('Type of getTopics from import:', typeof getTopics); // Exemple
+
+// Ligne 14 (ou la vôtre qui cause l'erreur)
+// Exemple: router.get('/topics', forumController.getTopics);
+// Exemple: router.get('/topics/:topicId/messages', myCustomAuthMiddleware, forumController.getMessagesForTopic);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const Enrollment = require('../../../models/Enrollment');
+const Enrollment = require('../../../models');
 const LessonProgress = require('../../../models/LessonProgress');
 
 // Create a new enrollment
