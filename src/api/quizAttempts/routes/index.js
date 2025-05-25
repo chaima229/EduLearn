@@ -1,20 +1,13 @@
+// src/api/quizAttempts/routes/index.js
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); // Routeur pour /api/quiz-attempts
 const quizAttemptController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-// Route to create a new quiz attempt
-router.post('/', quizAttemptController.createQuizAttempt);
+// Route pour obtenir une tentative spécifique par son ID
+router.get('/:attemptId', myCustomAuthMiddleware, quizAttemptController.getQuizAttemptById);
 
-// Route to get all quiz attempts
-router.get('/', quizAttemptController.getAllQuizAttempts);
-
-// Route to get a specific quiz attempt by ID
-router.get('/:id', quizAttemptController.getQuizAttemptById);
-
-// Route to update a quiz attempt by ID
-router.put('/:id', quizAttemptController.updateQuizAttempt);
-
-// Route to delete a quiz attempt by ID
-router.delete('/:id', quizAttemptController.deleteQuizAttempt);
+// Note: La soumission (POST) et la récupération (GET list) des tentatives sont gérées
+// via une route imbriquée sous /api/quizzes/:quizId/attempts
 
 module.exports = router;

@@ -1,66 +1,92 @@
-const Category = require('../../../models');
+// src/api/categories/controller/index.js
+const { CategoryCourse } = require('../../../models');
 
-// Create a new category
-exports.createCategory = async (req, res) => {
+// @desc    Create a new category
+// @route   POST /api/categories
+// @access  Private/Admin ou Instructeur
+exports.createCategory = async (req, res, next) => {
+    const { nom_categorie, description } = req.body;
     try {
-        const { nom_categorie, description } = req.body;
-        const newCategory = await Category.create({ nom_categorie, description });
+        if (req.user.role !== 'admin' && req.user.role !== 'instructeur') {
+            return res.status(403).json({ message: "Accès refusé." });
+        }
+        const newCategory = await CategoryCourse.create({ nom_categorie, description });
         res.status(201).json(newCategory);
     } catch (error) {
-        res.status(500).json({ message: 'Erreur lors de la création de la catégorie', error });
-    }
-};
-
-// Get all categories
-exports.getAllCategories = async (req, res) => {
-    try {
-        const categories = await Category.findAll();
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(500).json({ message: 'Erreur lors de la récupération des catégories', error });
-    }
-};
-
-// Get a category by ID
-exports.getCategoryById = async (req, res) => {
-    try {
-        const category = await Category.findByPk(req.params.id);
-        if (!category) {
-            return res.status(404).json({ message: 'Catégorie non trouvée' });
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Cette catégorie existe déjà.' });
         }
-        res.status(200).json(category);
-    } catch (error) {
-        res.status(500).json({ message: 'Erreur lors de la récupération de la catégorie', error });
+        next(error);
     }
 };
 
-// Update a category
-exports.updateCategory = async (req, res) => {
+// @desc    Get all categories
+// @route   GET /api/categories
+// @access  Public
+exports.getAllCategories = async (req, res, next) => {
     try {
-        const { nom_categorie, description } = req.body;
-        const category = await Category.findByPk(req.params.id);
+        const categories = await CategoryCourse.findAll();
+        res.json(categories);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get category by ID
+// @route   GET /api/categories/:id
+// @access  Public
+exports.getCategoryById = async (req, res, next) => {
+    try {
+        const category = await CategoryCourse.findByPk(req.params.id);
         if (!category) {
-            return res.status(404).json({ message: 'Catégorie non trouvée' });
+            return res.status(404).json({ message: "Catégorie non trouvée." });
+        }
+        res.json(category);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update a category
+// @route   PUT /api/categories/:id
+// @access  Private/Admin ou Instructeur
+exports.updateCategory = async (req, res, next) => {
+    const { nom_categorie, description } = req.body;
+    try {
+        if (req.user.role !== 'admin' && req.user.role !== 'instructeur') {
+            return res.status(403).json({ message: "Accès refusé." });
+        }
+        const category = await CategoryCourse.findByPk(req.params.id);
+        if (!category) {
+            return res.status(404).json({ message: "Catégorie non trouvée." });
         }
         category.nom_categorie = nom_categorie || category.nom_categorie;
-        category.description = description || category.description;
+        category.description = description !== undefined ? description : category.description;
         await category.save();
-        res.status(200).json(category);
+        res.json(category);
     } catch (error) {
-        res.status(500).json({ message: 'Erreur lors de la mise à jour de la catégorie', error });
+         if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ message: 'Ce nom de catégorie est déjà utilisé.' });
+        }
+        next(error);
     }
 };
 
-// Delete a category
-exports.deleteCategory = async (req, res) => {
+// @desc    Delete a category
+// @route   DELETE /api/categories/:id
+// @access  Private/Admin
+exports.deleteCategory = async (req, res, next) => {
     try {
-        const category = await Category.findByPk(req.params.id);
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Accès refusé. Réservé aux administrateurs." });
+        }
+        const category = await CategoryCourse.findByPk(req.params.id);
         if (!category) {
-            return res.status(404).json({ message: 'Catégorie non trouvée' });
+            return res.status(404).json({ message: "Catégorie non trouvée." });
         }
         await category.destroy();
-        res.status(204).send();
+        res.json({ message: "Catégorie supprimée avec succès." });
     } catch (error) {
-        res.status(500).json({ message: 'Erreur lors de la suppression de la catégorie', error });
+        next(error);
     }
 };

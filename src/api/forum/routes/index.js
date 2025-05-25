@@ -1,23 +1,30 @@
 // src/api/forum/routes/index.js
 const express = require('express');
-const router = express.Router({ mergeParams: true }); // mergeParams si c'est imbriqué
-const forumController = require('../controller'); // ou la déstructuration
-const myCustomAuthMiddleware = require('../../../middleware/authMiddleware'); // ou un autre middleware si pertinent
+const router = express.Router();
+const forumController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-console.log('--- Dans forum/routes ---');
-console.log('Type of myCustomAuthMiddleware:', typeof myCustomAuthMiddleware); // Si vous l'utilisez
+// Routes pour les Sujets (Topics)
+router.route('/topics')
+    .post(myCustomAuthMiddleware, forumController.createForumTopic) // Pour les sujets généraux
+    .get(forumController.getAllForumTopics); // Liste tous les sujets (ou filtre si pas de courseId)
 
-// Si vous importez tout l'objet controller:
-console.log('forumController:', forumController);
-// Remplacez 'nomDeLaFonctionUtiliseeALaLigne14' par le vrai nom de la fonction du contrôleur
-console.log('Type of forumController.nomDeLaFonctionUtiliseeALaLigne14:', typeof forumController.nomDeLaFonctionUtiliseeALaLigne14);
+router.route('/topics/:topicId')
+    .get(forumController.getForumTopicById) // Récupère un sujet et ses messages
+    .delete(myCustomAuthMiddleware, forumController.deleteForumTopic); // Supprime un sujet
 
-// Si vous déstructurez le controller:
-// const { getTopics, createTopic } = require('../controller');
-// console.log('Type of getTopics from import:', typeof getTopics); // Exemple
+// Route pour poster un message dans un sujet
+router.post('/topics/:topicId/messages', myCustomAuthMiddleware, forumController.postForumMessage);
 
-// Ligne 14 (ou la vôtre qui cause l'erreur)
-// Exemple: router.get('/topics', forumController.getTopics);
-// Exemple: router.get('/topics/:topicId/messages', myCustomAuthMiddleware, forumController.getMessagesForTopic);
+// Routes pour les Messages (accès direct par ID de message)
+router.route('/messages/:messageId')
+    .put(myCustomAuthMiddleware, forumController.updateForumMessage)
+    .delete(myCustomAuthMiddleware, forumController.deleteForumMessage);
+
+// Note: la création de sujets et la liste des sujets liés à un cours
+// devraient être gérées via des routes imbriquées sous /courses
+// Exemple pour `api/courses/routes/index.js`:
+// const courseForumRoutes = require('./courseForumRoutes'); // À créer
+// router.use('/:courseId/forum', courseForumRoutes);
 
 module.exports = router;

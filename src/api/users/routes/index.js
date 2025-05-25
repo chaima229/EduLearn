@@ -1,12 +1,16 @@
+// src/api/users/routes/index.js
 const express = require('express');
 const router = express.Router();
-const userController = require('../controller/index');
+const userController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
+// Si vous implémentez 'authorize': const { authorize } = require('../../../middleware/authMiddleware');
 
-// Routes for user management
-router.post('/', userController.createUser); // Create a new user
-router.get('/', userController.getAllUsers); // Get all users
-router.get('/:id', userController.getUserById); // Get a user by ID
-router.put('/:id', userController.updateUser); // Update a user by ID
-router.delete('/:id', userController.deleteUser); // Delete a user by ID
+router.route('/')
+    .get(myCustomAuthMiddleware, userController.getAllUsers); // Le contrôleur vérifie le rôle admin
+
+router.route('/:id')
+    .get(myCustomAuthMiddleware, userController.getUserById)
+    .put(myCustomAuthMiddleware, userController.updateUser)
+    .delete(myCustomAuthMiddleware, userController.deleteUser); // Le contrôleur vérifie le rôle admin
 
 module.exports = router;

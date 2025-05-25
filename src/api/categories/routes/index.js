@@ -1,20 +1,16 @@
+// src/api/categories/routes/index.js
 const express = require('express');
 const router = express.Router();
-const categoryController = require('../controller/index');
+const categoryController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-// Route to get all categories
-router.get('/', categoryController.getAllCategories);
+router.route('/')
+    .post(myCustomAuthMiddleware, categoryController.createCategory) // Le contrôleur vérifie le rôle
+    .get(categoryController.getAllCategories);
 
-// Route to get a category by ID
-router.get('/:id', categoryController.getCategoryById);
-
-// Route to create a new category
-router.post('/', categoryController.createCategory);
-
-// Route to update a category by ID
-router.put('/:id', categoryController.updateCategory);
-
-// Route to delete a category by ID
-router.delete('/:id', categoryController.deleteCategory);
+router.route('/:id')
+    .get(categoryController.getCategoryById)
+    .put(myCustomAuthMiddleware, categoryController.updateCategory) // Le contrôleur vérifie le rôle
+    .delete(myCustomAuthMiddleware, categoryController.deleteCategory); // Le contrôleur vérifie le rôle
 
 module.exports = router;

@@ -1,20 +1,22 @@
+// src/api/certificates/routes/index.js
 const express = require('express');
 const router = express.Router();
-const certificatesController = require('../controller');
+const certificateController = require('../controller');
+const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-// Route to create a new certificate
-router.post('/', certificatesController.createCertificate);
+// Route pour que l'utilisateur actuel récupère SES certificats
+router.get('/my-certificates', myCustomAuthMiddleware, certificateController.getMyCertificates);
 
-// Route to get all certificates
-router.get('/', certificatesController.getAllCertificates);
+// Route pour attribuer un certificat (par admin/instructeur)
+router.post('/award', myCustomAuthMiddleware, certificateController.awardUserCertificate);
 
-// Route to get a specific certificate by ID
-router.get('/:id', certificatesController.getCertificateById);
+// Route pour obtenir un certificat utilisateur spécifique par son ID
+router.get('/:userCertificateId', myCustomAuthMiddleware, certificateController.getUserCertificateById);
 
-// Route to update a certificate by ID
-router.put('/:id', certificatesController.updateCertificate);
+// Routes pour les définitions de certificats
+router.put('/definitions/:certificateDefId', myCustomAuthMiddleware, certificateController.updateCertificateDefinition);
 
-// Route to delete a certificate by ID
-router.delete('/:id', certificatesController.deleteCertificate);
+// Note: la création et la récupération de définition de certificat sont imbriquées sous /courses
+// Donc elles iront dans un fichier `api/courses/certificateDefinitionRoutes.js`
 
 module.exports = router;

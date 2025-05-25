@@ -1,20 +1,20 @@
 // src/api/enrollments/routes/index.js
 const express = require('express');
-const router = express.Router();
-const enrollmentController = require('../controller'); // ou la déstructuration
+const router = express.Router(); // Routeur principal pour /api/enrollments
+const enrollmentController = require('../controller');
 const myCustomAuthMiddleware = require('../../../middleware/authMiddleware');
 
-console.log('--- Dans enrollments/routes ---');
-console.log('Type of myCustomAuthMiddleware:', typeof myCustomAuthMiddleware);
-// Si vous importez tout l'objet controller:
-console.log('enrollmentController:', enrollmentController);
-console.log('Type of enrollmentController.createEnrollment:', typeof enrollmentController.createEnrollment); // Remplacez createEnrollment par le nom de votre fonction
-// Si vous déstructurez le controller:
-// const { createEnrollment, getMyEnrollments } = require('../controller');
-// console.log('Type of createEnrollment from import:', typeof createEnrollment);
+// Créer une route dédiée pour les actions d'un utilisateur sur SES inscriptions
+router.get('/my-enrollments', myCustomAuthMiddleware, enrollmentController.getMyEnrollments);
 
+// Route pour obtenir les détails d'une inscription spécifique
+router.get('/:enrollmentId', myCustomAuthMiddleware, enrollmentController.getEnrollmentDetails);
 
-// Ligne 13 (ou la vôtre)
-router.post('/', myCustomAuthMiddleware, enrollmentController.createEnrollment); // ou le nom de votre fonction
+// Route pour mettre à jour la progression d'une leçon pour une inscription donnée
+router.patch('/:enrollmentId/lessons/:lessonId/progress', myCustomAuthMiddleware, enrollmentController.updateLessonProgress);
+
+// Pas de POST, PUT, DELETE directs sur /api/enrollments/:id en général
+// L'inscription se fait via /api/courses/:courseId/enroll
+// La suppression d'une inscription peut être gérée par un admin ou si un cours/utilisateur est supprimé (via ON DELETE CASCADE)
 
 module.exports = router;
