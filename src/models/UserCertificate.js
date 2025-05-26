@@ -53,5 +53,24 @@ module.exports = (sequelize, DataTypes) => {
             }
         ]
     });
+    UserCertificate.associate = function(models) {
+        // Un UserCertificate appartient à un Utilisateur
+        UserCertificate.belongsTo(models.User, { // `models.User` fait référence au modèle User que Sequelize aura chargé
+            foreignKey: 'utilisateur_id', // La clé étrangère dans CertificatsUtilisateur
+            as: 'utilisateur' // C'est l'alias crucial ! Le JSON aura la clé "utilisateur"
+        });
+
+        // Un UserCertificate appartient à une définition de Certificat
+        UserCertificate.belongsTo(models.Certificate, { // `models.Certificate` est le modèle de la table `Certificats`
+            foreignKey: 'certificat_id',
+            as: 'Certificat' // L'alias sera 'Certificat' (ou 'definition' si vous préférez)
+        });
+
+        // Un UserCertificate appartient à un Cours
+        UserCertificate.belongsTo(models.Course, { // `models.Course` est le modèle de la table `Cours`
+            foreignKey: 'cours_id',
+            as: 'Cour' // L'alias sera 'Cour' (ou 'courseDetails' etc.)
+        });
+    };
     return UserCertificate;
 };

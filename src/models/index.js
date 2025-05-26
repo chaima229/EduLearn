@@ -80,9 +80,13 @@ db.Certificate.belongsTo(db.Course, { foreignKey: 'cours_id' });
 db.Certificate.hasMany(db.UserCertificate, { foreignKey: 'certificat_id' });
 
 // CertificatsUtilisateur
-db.UserCertificate.belongsTo(db.User, { foreignKey: 'utilisateur_id' });
+db.UserCertificate.belongsTo(db.User, {
+    foreignKey: 'utilisateur_id',
+    as: 'utilisateur' // Définir l'alias ici !
+});
 db.UserCertificate.belongsTo(db.Certificate, { foreignKey: 'certificat_id' });
 db.UserCertificate.belongsTo(db.Course, { foreignKey: 'cours_id' }); // Redondant mais pratique
+
 
 // ForumSujets
 db.ForumTopic.belongsTo(db.Course, { foreignKey: 'cours_id', as: 'course' });

@@ -113,16 +113,30 @@ exports.awardUserCertificate = async (req, res, next) => {
 // @access  Private
 exports.getMyCertificates = async (req, res, next) => {
     try {
-        const certificates = await UserCertificate.findAll({
+        const certificates = await UserCertificate.findAll({ // Modèle Sequelize est 'CertificatsUtilisateur' comme défini
             where: { utilisateur_id: req.user.id },
             include: [
-                { model: Certificate, attributes: ['titre_certificat'] },
-                { model: Course, attributes: ['titre'] }
+                {
+                    model: Certificate, // Modèle Sequelize est 'Certificate'
+                    // as: 'CertificateDefinition', // OPTIONNEL: alias si vous le souhaitez, sinon ce sera "Certificate"
+                    attributes: ['titre_certificat', 'description_modele']
+                },
+                {
+                    model: Course, // Modèle Sequelize est 'Course'
+                    // as: 'relatedCourse', // OPTIONNEL: alias, sinon ce sera "Course"
+                    attributes: ['id', 'titre']
+                },
+                {
+                    model: User,
+                    as: 'utilisateur', // <<< C'est ici le problème
+                    attributes: ['id', 'prenom', 'nom_famille', 'email', 'nom_utilisateur']
+                }
             ],
             order: [['date_obtention', 'DESC']]
         });
         res.json(certificates);
     } catch (error) {
+        console.error("Erreur getMyCertificates:", error); // Bonne pratique d'avoir un log serveur
         next(error);
     }
 };
