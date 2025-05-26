@@ -42,35 +42,73 @@ exports.createQuiz = async (req, res, next) => {
 // @desc    Get a quiz by ID (avec ses questions et options)
 // @route   GET /api/quizzes/:id
 // @access  Private (Utilisateur inscrit au cours/ayant accès à la leçon, ou instructeur/admin)
+// src/api/quizzes/controller/index.js
+
 exports.getQuizById = async (req, res, next) => {
     try {
         const quiz = await Quiz.findByPk(req.params.id, {
             include: [
                 {
                     model: QuizQuestion,
+                    // as: 'questions', // Si vous avez défini un alias dans Quiz.hasMany(QuizQuestion, { as: 'questions' })
                     order: [['ordre', 'ASC']],
-                    include: [{ model: ResponseOption }] // Ne pas inclure est_correcte pour les étudiants !
+                    include: [
+                        {
+                            model: ResponseOption,
+                            // as: 'options' // Si vous avez défini un alias dans QuizQuestion.hasMany(ResponseOption, { as: 'options' })
+                        }
+                    ]
                 },
-                { model: Course, attributes: ['id', 'titre', 'instructeur_id', 'est_publie']},
-                { model: Lesson, include: [{model: Course, attributes: ['id', 'instructeur_id', 'est_publie']}]}
+                {
+                    model: Course,
+                    as: 'course', // Correspond à l'alias dans Quiz.belongsTo(Course, { as: 'course' })
+                    attributes: ['id', 'titre', 'instructeur_id', 'est_publie'],
+                    required: false // Le quiz peut être lié à une leçon et pas directement à un cours
+                },
+                {
+                    model: Lesson,
+                    as: 'lesson', // Correspond à l'alias dans Quiz.belongsTo(Lesson, { as: 'lesson' })
+                    attributes: ['id', 'titre', 'cours_id'], // Inclure cours_id pour récupérer les détails du cours parent de la leçon
+                    required: false, // Le quiz peut être lié à un cours et pas directement à une leçon
+                    include: [
+                        {
+                            model: Course,
+                            as: 'courseForLesson', // DOIT correspondre à l'alias dans Lesson.belongsTo(Course, { as: 'courseForLesson' })
+                            attributes: ['id', 'titre', 'instructeur_id', 'est_publie']
+                        }
+                    ]
+                }
             ]
         });
-        if (!quiz) return res.status(404).json({ message: "Quiz non trouvé." });
 
-        // TODO: Logique de vérification d'accès (si le quiz est pour un cours/leçon publié, si l'user est inscrit, etc.)
-        // Pour l'instant, on le laisse accessible si l'utilisateur est authentifié
-        // Masquer les bonnes réponses pour les non-instructeurs/admins
-        if (req.user.role === 'etudiant' || (quiz.Course && req.user.id !== quiz.Course.instructeur_id) || (quiz.Lesson && req.user.id !== quiz.Lesson.Cour.instructeur_id)) {
-            quiz.QuizQuestions.forEach(question => {
-                if(question.ResponseOptions){
-                    question.ResponseOptions.forEach(option => {
-                        delete option.dataValues.est_correcte; // Ou la cloner et la modifier
-                    });
-                }
-            });
+        if (!quiz) {
+            return res.status(404).json({ message: "Quiz non trouvé." });
+        }
+
+        // Déterminer si l'utilisateur actuel est l'instructeur de ce quiz
+        let isInstructorOfThisQuiz = false;
+        if (quiz.course && quiz.course.instructeur_id === req.user.id) {
+            isInstructorOfThisQuiz = true;
+        } else if (quiz.lesson && quiz.lesson.courseForLesson && quiz.lesson.courseForLesson.instructeur_id === req.user.id) {
+            isInstructorOfThisQuiz = true;
+        }
+
+        // Masquer les bonnes réponses si ce n'est pas l'admin ou l'instructeur du quiz
+        if (req.user.role !== 'admin' && !isInstructorOfThisQuiz) {
+            if (quiz.QuizQuestions) { // Le nom par défaut de l'association hasMany est le pluriel du modèle cible
+                quiz.QuizQuestions.forEach(question => {
+                    // Le nom par défaut de l'association hasMany est le pluriel du modèle cible ('ResponseOptions')
+                    if (question.ResponseOptions) {
+                        question.ResponseOptions.forEach(option => {
+                            delete option.dataValues.est_correcte;
+                        });
+                    }
+                });
+            }
         }
         res.json(quiz);
     } catch (error) {
+        console.error("ERREUR BACKEND - getQuizById:", error);
         next(error);
     }
 };

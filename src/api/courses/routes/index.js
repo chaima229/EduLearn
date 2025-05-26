@@ -41,5 +41,6 @@ router.use('/:courseId/certificate-definition', certificateDefinitionRoutesForCo
 
 router.use('/:courseId/forum', courseForumRoutes); // '/:courseId/forum' ou '/:courseId/forum/topics' si vous préférez
 
+router.get('/:courseId/my-enrollment',myCustomAuthMiddleware,  courseController.getMyEnrollmentForCourse);
 
 module.exports = router;

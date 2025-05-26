@@ -1,5 +1,5 @@
 // src/api/courses/controller/index.js
-const { Course, User, CategoryCourse, Lesson } = require('../../../models');
+const { Course, User, CategoryCourse, Lesson, Quiz, CourseEnrollment } = require('../../../models');
 const { Op } = require('sequelize');
 
 // @desc    Create a new course
@@ -104,7 +104,16 @@ exports.getCourseById = async (req, res, next) => {
             include: [
                 { model: User, as: 'instructor', attributes: ['id', 'nom_utilisateur', 'prenom', 'nom_famille'] },
                 { model: CategoryCourse, as: 'category', attributes: ['id', 'nom_categorie'] },
-                { model: Lesson, order: [['ordre', 'ASC']], attributes: ['id', 'titre', 'ordre', 'duree_estimee_min'] }
+                {model: Lesson, order: [['ordre', 'ASC']], attributes: ['id', 'cours_id', 'titre', 'contenu', 'ordre', 'duree_estimee_min'],
+                    include: [ // Inclusion imbriquée
+                        {
+                            model: Quiz,          // <<< SI `Quiz` n'est pas correctement reconnu par Sequelize ici, ERREUR
+                            as: 'lessonQuizzes',  // <<< Vérifiez que cet alias est défini dans Lesson.hasMany(Quiz, { as: 'lessonQuizzes' })
+                            attributes: ['id', 'titre'],
+                            required: false // Important pour que les leçons sans quiz s'affichent quand même
+                        }
+                    ]
+                }
             ]
         });
 
@@ -170,6 +179,27 @@ exports.deleteCourse = async (req, res, next) => {
         await course.destroy();
         res.json({ message: 'Cours supprimé avec succès' });
     } catch (error) {
+        next(error);
+    }
+};
+
+exports.getMyEnrollmentForCourse = async (req, res, next) => {
+    const { courseId } = req.params;
+    const utilisateur_id = req.user.id; // req.user sera défini par le middleware d'authentification
+    try {
+        const enrollment = await CourseEnrollment.findOne({
+            where: { utilisateur_id, cours_id: courseId },
+        });
+        if (!enrollment) {
+            // Renvoyer 404 n'est pas toujours une erreur, cela signifie juste "pas d'inscription"
+            // Le client peut gérer cela. Pour éviter de casser le flux client qui s'attendrait
+            // peut-être à un null, on peut renvoyer 200 avec null ou un objet vide.
+            // Mais pour un endpoint "get", 404 si la ressource spécifique (l'inscription) n'existe pas est aussi valide.
+            return res.status(404).json({ message: "Utilisateur non inscrit à ce cours." });
+        }
+        res.json(enrollment); // Renvoie l'objet d'inscription trouvé
+    } catch (error) {
+        console.error("Erreur getMyEnrollmentForCourse:", error);
         next(error);
     }
 };

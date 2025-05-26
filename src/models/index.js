@@ -45,9 +45,10 @@ db.Course.hasMany(db.UserCertificate, { foreignKey: 'cours_id' }); // Redondant 
 db.Course.hasMany(db.ForumTopic, { foreignKey: 'cours_id' });
 
 // Lecons
-db.Lesson.belongsTo(db.Course, { foreignKey: 'cours_id' });
+db.Lesson.belongsTo(db.Course, { foreignKey: 'cours_id', as: 'courseForLesson' });
 db.Lesson.hasMany(db.LessonProgress, { foreignKey: 'lecon_id' });
 db.Lesson.hasMany(db.Quiz, { foreignKey: 'lecon_id', as: 'lessonQuizzes' }); // Quiz liés à une leçon
+
 
 // InscriptionsCours
 db.CourseEnrollment.belongsTo(db.User, { foreignKey: 'utilisateur_id' });
