@@ -12,7 +12,7 @@ const quizRoutes = require('./quizzes/routes'); // Gère /api/quizzes/:id + imbr
 const quizAttemptRoutes = require('./quizAttempts/routes'); // Gère /api/quiz-attempts/:id
 const certificateRoutes = require('./certificates/routes'); // Gère /api/certificates/...
 const forumRoutes = require('./forum/routes'); // Gère /api/forum/...
-
+const notificationRoutes = require('./notifications/routes')
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -24,6 +24,7 @@ router.use('/quizzes', quizRoutes);         // Déjà configuré pour imbriquer 
 router.use('/quiz-attempts', quizAttemptRoutes);
 router.use('/certificates', certificateRoutes);
 router.use('/forum', forumRoutes);
+router.use('/notifications', notificationRoutes);
 
 
 router.get('/healthcheck', (req, res) => res.send('API is healthy and running!'));

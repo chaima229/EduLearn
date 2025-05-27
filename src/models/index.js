@@ -100,5 +100,8 @@ db.ForumMessage.belongsTo(db.User, { foreignKey: 'utilisateur_id_auteur', as: 'a
 db.ForumMessage.belongsTo(db.ForumMessage, { foreignKey: 'message_parent_id', as: 'parentMessage' });
 db.ForumMessage.hasMany(db.ForumMessage, { foreignKey: 'message_parent_id', as: 'replies' });
 
+//Notifications
+db.Notification = require('./Notification')(sequelize, Sequelize);
+
 
 module.exports = db;
