@@ -62,12 +62,12 @@ db.LessonProgress.belongsTo(db.Lesson, { foreignKey: 'lecon_id' });
 // Quiz
 db.Quiz.belongsTo(db.Lesson, { foreignKey: 'lecon_id', as: 'lesson', constraints: false }); // constraints: false car lecon_id peut être NULL
 db.Quiz.belongsTo(db.Course, { foreignKey: 'cours_id', as: 'course', constraints: false }); // constraints: false car cours_id peut être NULL
-db.Quiz.hasMany(db.QuizQuestion, { foreignKey: 'quiz_id' });
+db.Quiz.hasMany(db.QuizQuestion, { foreignKey: 'quiz_id', as: 'QuestionsQuizzes' });
 db.Quiz.hasMany(db.QuizAttempt, { foreignKey: 'quiz_id' });
 
 // QuestionsQuiz
 db.QuizQuestion.belongsTo(db.Quiz, { foreignKey: 'quiz_id' });
-db.QuizQuestion.hasMany(db.ResponseOption, { foreignKey: 'question_id' });
+db.QuizQuestion.hasMany(db.ResponseOption, { foreignKey: 'question_id', as: 'OptionsReponses' });
 
 // OptionsReponse
 db.ResponseOption.belongsTo(db.QuizQuestion, { foreignKey: 'question_id' });

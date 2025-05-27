@@ -7,7 +7,7 @@ const { QuizAttempt, Quiz, QuizQuestion, ResponseOption, User, sequelize } = req
 exports.submitQuizAttempt = async (req, res, next) => {
     const { quizId } = req.params;
     const utilisateur_id = req.user.id;
-    const userAnswers = req.body.answers; // Format attendu: [{ question_id: X, option_id: Y }, { question_id: Z, answer_text: "..." }]
+    const userAnswers = req.body.answers;
 
     if (!userAnswers || !Array.isArray(userAnswers)) {
         return res.status(400).json({ message: "Les réponses ('answers') doivent être un tableau." });
@@ -16,55 +16,78 @@ exports.submitQuizAttempt = async (req, res, next) => {
     try {
         const quiz = await Quiz.findByPk(quizId, {
             include: [{
-                model: QuizQuestion,
-                include: [ResponseOption] // Besoin des options pour corriger
+                model: QuizQuestion,       // 1. Est-ce que QuizQuestion est bien importé ici ? Oui, en haut.
+                as: 'QuestionsQuizzes',    // 2. EST-CE L'ALIAS CORRECT POUR L'ASSOCIATION Quiz.hasMany(QuizQuestion) ?
+                include: [{
+                    model: ResponseOption, // 3. Est-ce que ResponseOption est bien importé ici ? Oui.
+                    as: 'OptionsReponses'  // 4. EST-CE L'ALIAS CORRECT POUR QuizQuestion.hasMany(ResponseOption) ?
+                }]
             }]
         });
-        if (!quiz) return res.status(404).json({ message: "Quiz non trouvé." });
-        // TODO: Vérifier si l'utilisateur a le droit de tenter ce quiz (inscrit au cours, etc.)
 
+        // === AJOUTER CE DÉBOGAGE IMMÉDIATEMENT APRÈS LE CHARGEMENT DU QUIZ ===
+        if (!quiz) {
+            console.error(`submitQuizAttempt: Quiz non trouvé pour ID ${quizId}`);
+            return res.status(404).json({ message: "Quiz non trouvé." });
+        }
+        console.log("Dans submitQuizAttempt, Objet Quiz CHARGÉ:", JSON.stringify(quiz, null, 2));
+        if (!quiz.QuestionsQuizzes || !Array.isArray(quiz.QuestionsQuizzes)) {
+             console.error("ERREUR CRITIQUE DANS submitQuizAttempt: quiz.QuestionsQuizzes n'est pas un tableau ou est manquant !");
+             console.error("Clés disponibles sur l'objet quiz:", Object.keys(quiz.get({plain:true}))); // Pour voir les clés disponibles
+             // Cela va probablement causer le crash suivant si on ne retourne pas une erreur ici
+             return res.status(500).json({ message: "Erreur interne lors du chargement des questions du quiz pour la soumission."});
+        }
+        // ====================================================================
+
+
+        // Si le code arrive ici, quiz.QuestionsQuizzes doit être un array
         let score = 0;
-        let totalPossibleScore = 0; // Pourrait être basé sur le nombre de questions, ou des points par question
+        let totalPossibleScore = 0;
 
-        // Logique de correction simple: 1 point par bonne réponse
-        for (const question of quiz.QuizQuestions) {
-            totalPossibleScore += 1; // Chaque question vaut 1 point
-            const userAnswer = userAnswers.find(ans => ans.question_id === question.id);
+        for (const question of quiz.QuestionsQuizzes) { // La ligne qui plante (ligne 30 après vos modifs)
+            totalPossibleScore += 1;
+            const userAnswer = userAnswers.find(ans => ans['question_id'] === question.id); // Utiliser ['question_id'] pour plus de sûreté
 
-            if (userAnswer) {
+            if (userAnswer && userAnswer['option_id'] != null) { // S'assurer que option_id existe
                 if (question.type_question === 'QCM' || question.type_question === 'VRAI_FAUX') {
-                    const correctOption = question.ResponseOptions.find(opt => opt.est_correcte === true);
-                    if (correctOption && userAnswer.option_id === correctOption.id) {
+                    if (!question.OptionsReponses || !Array.isArray(question.OptionsReponses)) {
+                        console.error(`ERREUR CRITIQUE DANS submitQuizAttempt: question.OptionsReponses n'est pas un tableau pour question ID ${question.id}`);
+                        continue; // Passer à la question suivante si les options sont manquantes
+                    }
+                    const correctOption = question.OptionsReponses.find(opt => opt.est_correcte === true);
+                    if (correctOption && userAnswer['option_id'] === correctOption.id) {
                         score += 1;
                     }
-                } else if (question.type_question === 'REPONSE_COURTE') {
-                    // Pour REPONSE_COURTE, la correction est plus complexe.
-                    // Il faudrait stocker la réponse correcte attendue avec la question,
-                    // puis faire une comparaison (sensible à la casse, expression régulière, etc.).
-                    // Ici, on ne note pas les réponses courtes pour simplifier.
                 }
             }
         }
-
+        // ... (reste de la fonction)
         const score_pourcentage = totalPossibleScore > 0 ? (score / totalPossibleScore) * 100 : 0;
-
+        console.log("Avant QuizAttempt.create. Données:", { utilisateur_id, quiz_id: parseInt(quizId), score_obtenu: score_pourcentage.toFixed(2), reponses_utilisateur: userAnswers });
         const attempt = await QuizAttempt.create({
             utilisateur_id,
-            quiz_id: quizId,
-            score_obtenu: score_pourcentage, // ou score brut si vous préférez
-            reponses_utilisateur: userAnswers // Stocker les réponses soumises
+            quiz_id: parseInt(quizId),
+            score_obtenu: score_pourcentage.toFixed(2),
+            reponses_utilisateur: userAnswers // Sequelize devrait gérer la sérialisation en JSON pour ce champ si le type est DataTypes.JSON
         });
+        console.log("Après QuizAttempt.create. Tentative créée:", JSON.stringify(attempt, null, 2));
+        // === FIN POINT D'ARRÊT POTENTIEL N°1 ===
 
+        // === POINT D'ARRÊT POTENTIEL N°2 : Envoi de la réponse ===
         res.status(201).json({
             message: "Tentative soumise.",
-            attempt,
+            attempt: attempt.get({ plain: true }), // Utilisez .get({ plain: true }) pour un objet simple
             score: score,
             totalPossibleScore: totalPossibleScore,
-            scorePourcentage: score_pourcentage,
-            passed: quiz.seuil_reussite_pourcentage ? (score_pourcentage >= quiz.seuil_reussite_pourcentage) : null
+            scorePourcentage: parseFloat(score_pourcentage.toFixed(2)),
+            // Assurez-vous que quiz.seuil_reussite_pourcentage est un nombre ici
+            passed: quiz.seuil_reussite_pourcentage ? (score_pourcentage >= parseFloat(quiz.seuil_reussite_pourcentage.toString())) : null
         });
-
+        console.log("Réponse envoyée au client après soumission de la tentative."); // Pour confirmer que res.json a été appelé
+        // === FIN POINT D'ARRÊT POTENTIEL N°2 ===
+        // ... (create attempt, res.json)
     } catch (error) {
+        console.error("ERREUR DANS submitQuizAttempt (catch général):", error);
         next(error);
     }
 };

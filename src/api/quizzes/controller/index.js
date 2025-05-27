@@ -49,15 +49,12 @@ exports.getQuizById = async (req, res, next) => {
         const quiz = await Quiz.findByPk(req.params.id, {
             include: [
                 {
-                    model: QuizQuestion,
-                    // as: 'questions', // Si vous avez défini un alias dans Quiz.hasMany(QuizQuestion, { as: 'questions' })
-                    order: [['ordre', 'ASC']],
-                    include: [
-                        {
-                            model: ResponseOption,
-                            // as: 'options' // Si vous avez défini un alias dans QuizQuestion.hasMany(ResponseOption, { as: 'options' })
-                        }
-                    ]
+                    model: QuizQuestion, // Ou QuestionsQuiz si c'est le nom de votre modèle
+                    as: 'QuestionsQuizzes', // <<< Cet alias
+                    include: [{
+                        model: ResponseOption,
+                        as: 'OptionsReponses' // <<< Cet alias
+                    }]
                 },
                 {
                     model: Course,
